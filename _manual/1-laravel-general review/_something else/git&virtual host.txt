@@ -1,0 +1,60 @@
+cd www/products (!for Vagrant cd var/www/html/products)
+
+git init
+git config --global user.name "25one"
+git config --global user.email "25one@ukr.net"
+git config --global core.safecrlf false
+
+git remote add products https://github.com/25one/products
+
+git add * -f
+git add .htaccess
+(git add .env -f — for laravel)
+
+git commit -m 'products'
+
+git push products master
+
+rm -rf .git
+
+----------------------------------------------------------
+
+cd /
+cd www (!for Vagrant cd var/www/html - !!!without /products)
+git clone https://github.com/25one/products.git
+(if folder exists, cd products and
+git clone https://github.com/25one/products.git .)
+
+cd products
+rm -rf .git
+
+----------------------------------------------------------
+
+sudo –i
+
+sudo nano /etc/apache2/sites-available/test.conf
+<VirtualHost *:80>
+        ServerName test
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/html/test
+
+        <Directory /var/www/html/test>
+         Options Indexes FollowSymlinks
+         AllowOverride All
+         Require all granted
+        </Directory> 
+</VirtualHost>
+
+sudo ln -s /etc/apache2/sites-available/test.conf /etc/apache2/sites-enabled/test.conf
+
+cd /
+cd etc
+
+sudo nano hosts
+127.0.0.1   localhost
+127.0.0.1   test
+127.0.0.1   ...
+
+sudo service apache2 restart
+
+

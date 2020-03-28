@@ -1,0 +1,1410 @@
+laravel-products
+
+
+1-Install&Setting of laravel
+
+Must be VIRTUAL HOST laravel-products and DB laravel-products.
+
+Terminal
+cd www
+
+(if not global)
+curl -s http://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/
+alias composer='/usr/local/bin/composer.phar'
+
+composer create-project --prefer-dist laravel/laravel laravel-products "5.8.*"
+
+cd laravel-products
+(if not global)
+curl -s http://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/
+alias composer='/usr/local/bin/composer.phar'
+
+sudo chmod -R 777 storage
+sudo chmod -R 777 bootstrap/cache
+(if you need (change config, view...
+php artisan config:cache 
+php artisan cache:clear
+php artisan view:clear)
+
+Rename .env.example in .env and .env 
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel-products
+DB_USERNAME=root
+DB_PASSWORD=password
+
+php artisan key:generate 
+php artisan config:cache
+
+Without PUBLIC in URLc
+Rename server.php in your Laravel root folder to index.php 
+Copy the .htaccess file from /public directory to your Laravel root folder. 
+
+Test (without auth)
+http://laravel-products/
+
+php artisan make:auth 
+(views/auth (layouts, home.blade.php) + HomeController.php + web.php(routing) (LoginController.php, RegisterController.php... - и так были))
+
+Edit config/database.php
+...
+            //'charset' => 'utf8mb4',
+            //'collation' => 'utf8mb4_unicode_ci',
+            'charset' => 'utf8',
+            'collation' => 'utf8_unicode_ci',   
+... 
+
+'strict' => false,
+'engine' => 'InnoDB',
+
+php artisan config:cache
+
+php artisan migrate
+
+Test (with auth)
+http://laravel-products/
+
+
+----- 2-route&Controller&views-blade
+
+routes\web.php
+
+/*
+Route::get('/', function () {
+    return view('welcome');
+});
+*/
+
+Auth::routes();
+
+//Route::get('/home', 'HomeController@index')->name('home');
+
+Route::name('home')->get('/', 'ProductController@index');
+
+
+app\Http\Controllers\ProductController.php (from HomeController.php)
+
+class ProductController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        //$this->middleware('auth');
+    }
+
+    /**
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index()
+    {
+        return view('product.index');
+    }
+}
+
+
+views\product\index.blade.php (from welcome.blade.php)
+
+Hello…
+
+laravel-products/
+
+Hello…
+
+
+public\images, plugins, styles + js\jquery-3.2.1.min.js, custom.js from _Template-products + create main.js ($(document).ready… + var BaseRecord={})
+
+Create resources\views\product\layout.blade.php  
++here from index.html header + footer (+ from product.html and cart.html their style)
++from layouts\app.blade.php @yield('main') (between header and footer)
++"{{ asset('public/...') }}" for all (css, js , !!!images)
+
+views\product\index.blade.php from welcome.blade.php
+
+@extends('product.layout')
+
+@section('main')
+
+Hello… <!-- This word is not seen in browser now, but in Elements it is there -->
+
+@endsection
+
+
+
+----- 3-routing (product.blade.php, cart.blade.php)
+
+index.blade.php copy to product.blade.php, cart.blade.php
+
+index.blade.php start-content from index.html
+
+@extends('product.layout')
+
+@section('main')
+
+    <div class="super_container_inner">
+        <div class="super_overlay"></div>
+
+        <!-- Products -->
+
+        <div class="products">
+            <div class="container">
+                <div class="row products_row">
+
+                   Hello...
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endsection
+
+product.blade.php start-content from product.html
+
+@extends('product.layout')
+
+@section('main')
+
+    <div class="super_container_inner">
+        <div class="super_overlay"></div>
+
+		<!-- Product -->
+
+		<div class="product">
+			<div class="container">
+				<div class="row">
+
+                   Product...
+
+                </div>   
+            </div>
+        </div>
+
+    </div>     
+@endsection
+
+cart.blade.php start-content from cart.html
+@extends('product.layout')
+
+@section('main')
+
+        <div class="cart_section">
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <div class="cart_container">
+                            
+                            <!-- Cart Items -->
+                            <div class="cart_items">
+                                <ul class="cart_items_list">
+
+                                   Cart...
+
+                                </ul>
+                            </div>
+
+                            <!-- Cart Buttons -->
+                            <div class="cart_buttons d-flex flex-row align-items-start justify-content-start">
+                                <div class="cart_buttons_inner ml-sm-auto d-flex flex-row align-items-start justify-content-start flex-wrap">
+                                    <div class="button button_clear trans_200"><a href="#">clear</a></div>
+                                </div>
+                            </div> 
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>                        
+@endsection
+
+routes\web.php
+
+Route::name('home')->get('/', 'ProductController@index');
+Route::name('product')->get('/product', 'ProductController@product');
+Route::name('cart')->get('/cart', 'ProductController@cart');
+
++...because Route::name('cart')->get('/cart', 'ProductController@cart');
+recources\views\product\layout.blade.php                
+
+<!-- Cart -->
+                <div class="cart"><a href="{{ route('cart') }}"><div><img class="svg" src="{{ asset('public/images/cart.svg') }}" alt="https://www.flaticon.com/authors/freepik"></div></a></div>
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Show page home.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index()
+    {
+        return view('product.index');
+    }
+
+    /**
+     * Show page product.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function product()
+    {
+        return view('product.product');
+    }
+
+    /**
+     * Show page cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function cart()
+    {
+        return view('product.cart');
+    }    
+
+проверить работу main.js + main_style.css
+
+$(document).ready(function(){
+   alert('hi');
+});
+
+div {
+color: red;	
+}
+
+
+
+----4-migrations+seed(products, cart)&Models&Controller&Repositories(index) (in view – just print_r)
+
+database\migrations\2019_02_02_082606_products.php (copy-paste)
+
++2019_02_03_082606_carts.php
+
+class Carts extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('carts', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->decimal('price', 10, 2);
+            $table->string('image');                                 
+        }); 
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+       Schema::dropIfExists('carts');        
+    }
+}
+
+create app\Models + User.php rename there
+
+namespace App\Models;
+
++app\Http\Controllers\Auth\RegisterControllers.php
+
+use App\Models\User;
+
++config\auth.php
+
+    'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
+
+(
+curl -s http://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/
+alias composer='/usr/local/bin/composer.phar'
+)
+composer dump-autoload
+php artisan config:cache
+sudo chmod -R 777 storage
+
++Product.php (copy-paste), Cart.php from User.php (create from Product.php)
+
+
+database\seeds\DatabaseSeeder.php (at first copy-paste, but then just import dump-sql)
+
+php artisan migrate --seed
+
+app\Repositories\ProductRepository.php (copy-paste)
+
+namespace App\Repositories;
+
+use App\Models\ {
+    Product
+};
+
+class ProductRepository
+{
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model;
+
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     */
+    public function __construct(Product $product)
+    {
+        $this->model = $product;
+    }
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model
+            ->select('id', 'name', 'price', 'image');
+        return $query->get();
+    }
+
+app\Http\Controllers\ProductController.php
+
+use App\Repositories\ProductRepository;
+
+    /**
+     * The ProductRepository instance.
+     *
+     * @var \App\Repositories\ProductRepository
+     */
+    protected $repository;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct(ProductRepository $repository)
+    {
+        //$this->middleware('auth');
+        $this->repository = $repository;
+    }
+
+    /**
+     * Show page home.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index(Request $request)
+    {
+        $products = $this->repository->funcSelect($request);
+        return view('product.index', ['products' => $products]);
+    }
+
+resources\views\product\index.blade.php
+
+                <div class="row products_row">
+
+                   <?php print_r($products); ?>
+
+                </div>
+
+
+----5-select-data in blade(index + brick-standart)&Eloquent-builder query&parameter in route(product)
+
+resources\views\product\brick-standart.blade.php (copy-paste) (from js-project)
+
+at first just in view index.blade.php + @foreach
+
+                   <?php 
+                   //print_r($products); 
+                   ?>
+
+                    @foreach($products as $product)
+                    <div class="col-xl-4 col-md-6">
+                        <div class="product">
+                            <!-- image - img src -->
+                            <div class="product_image"><img src="{{ asset('public/images/' . $product->image) }}" alt=""></div> 
+                            <div class="product_content">
+                                <div class="product_info d-flex flex-row align-items-start justify-content-start">
+                                    <div>
+                                        <div>
+                                            <!-- name - <a href="#">...</a> -->
+                                            <div class="product_name"><a href="#">{{ $product->name }}</a></div> 
+                                        </div>
+                                    </div>
+                                    <div class="ml-auto text-right">
+                                        <!-- price - <span style="font-size: 0.8em;">...</span> -->
+                                        <div class="product_price text-right"><span style="font-size: 0.8em;">{{ $product->price }}</span></div> 
+                                    </div>
+                                </div>
+                                <div class="product_buttons">
+                                    <div class="text-right d-flex flex-row align-items-start justify-content-start">
+                                        <div class="product_button product_cart text-center d-flex flex-column align-items-center justify-content-center">
+                                            <div><div><img src="images/cart.svg" class="svg" alt=""><div>+</div></div></div> <!-- product cart -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                   
+                    @endforeach
+
+...but img — very small because in layout
+
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart_responsive.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product_responsive.css') }}">
+
+...then here <!-- … --> and here
+
+@yield('css')
+(+@yield('js'))
+
+...and in product.blade.php
+
+@extends('product.layout')
+
+@section('css')
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product.css') }}">
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product_responsive.css') }}">
+@endsection
+
+...and in cart.blade.php
+
+@extends('product.layout')
+
+@section('css')
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart.css') }}">
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart_responsive.css') }}">
+@endsection
+
+...or — another variant — brick-standard
+
+from resources\views\product\index.blade.php to brick-standart.blade.php with foreach (paste)
+
++ in  resources\views\product\index.blade.php
+
+                   <?php 
+                   //print_r($products); 
+                   ?>
+
+                   @include('product.brick-standard')
+
+
+top9=1 - app\Repositories\ProductRepository.php
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model
+            ->select('id', 'name', 'price', 'image')
+            //->where('top9', '=', 1);
+            ->where('top9', 1);
+            //->orderBy('price', 'asc');
+        return $query->get();
+    }
+
+resouces\views\product\brick-standard.blade.php
+
+                    @foreach($products as $product)
+                    <a href="{{ route('product', ['id' => $product->id]) }}">
+                       <div class="col-xl-4 col-md-6">
+                        …
+                      </div>  
+                    </a>                   
+                    @endforeach 
+
+
+routes\web.php
+...
+Route::name('product')->get('/product/{id}', 'ProductController@product');
+...
+
+app\Http\Controllers\ProductController.php
+
+use App\Models\Product;
+
+    /**
+     * The Model instance.
+     *
+     * @var \App\Models\Product
+     */
+    protected $model;    
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct(ProductRepository $repository, Product $product)
+    {
+        //$this->middleware('auth');
+        $this->repository = $repository;
+        $this->model = $product;        
+    }
+
+    /**
+     * Show page product.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function product($id)
+    {
+        $product = $this->model->find($id);
+        return view('product.product', ['product' => $product]);
+    }
+
+resources\views\product\product.blade.php
+
+            <div class="row">
+                   <?php print_r($product);  ?>
+            </div>   
+
+
+---- 6-ajax-more&search(index)
+
+resources\views\product\index.blade.php
+
+...
+        </div>
+
+        <div class="button load_more ml-auto mr-auto"><a href="#" class="link_again">больше</a>
+        
+    </div>
+
+@endsection
+
+
+resources\views\product\layout.blade.php
+
+                @if (\Request::is('/'))  
+                <!-- Search -->
+                <div class="header_search">
+                    <form action="/" id="header_search_form" method="post">
+                        <input type="text" name="search_input" class="search_input" placeholder="Поиск...">
+                        <button name="hook" type="button" class="header_search_button" value="Search"><img src="{{ asset('public/images/search.png') }}" alt=""></button>
+                    </form>
+                </div>
+               @endif
+
+                <!-- Cart -->
+…
+
+...and here is <script src="{{ asset('public/js/main.js') }}"></script>
+
+public\js\main.js
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+});
+
+var BaseRecord={
+
+top9: 1,
+search: '',
+
+more: function(){
+   var ajaxSetting={
+      method: 'get',
+      url: '/', //because Route::name('home')->get('/', 'ProductController@index');
+      data: {
+         top9: this.top9,
+         search: this.search,	
+      },
+      success: function(data){
+         //alert(data.table);
+         $('.row.products_row').html(data.table);
+      },
+   };
+   $.ajax(ajaxSetting);	
+},
+
+};
+
+
+app\Http\Controllers\ProductController.php
+
+    public function index(Request $request)
+    {
+        $products = $this->repository->funcSelect($request);
+
+        // Ajax response
+        if ($request->ajax()) {
+            return response()->json([
+                'table' => view("product.brick-standard", ['products' => $products])->render(),
+            ]);
+        } 
+
+        return view('product.index', ['products' => $products]);
+    }
+
+
+
+app\Repositories\ProductRepository.php
+
+    public function funcSelect($request)
+    {
+        $query = $this->model
+            ->select('id', 'name', 'price', 'image');
+            //->where('top9', '=', 1);
+            //->where('top9', 1);
+            //->orderBy('price', 'asc');
+            if(isset($request->top9)) $query->where('top9', $request->top9)
+                ->where('name', 'like', '%' . $request->search . '%');
+            else $query->where('top9', 1);
+
+        return $query->get();
+    }
+
+--- another variant of place js-code
+
+resources\views\product\layout.blade.php
+
+…
+<!-- <script src="{{ asset('public/js/main.js') }}"></script> -->
+
+@yield('js')
+
+
+pudlic\js\main.js
+
+/*
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+});
+*/
+
+
+var BaseRecord={
+...
+
+
+
+resources\views\product\index.blade.php
+
+...
+@endsection
+
+@section('js')
+<script src="{{ asset('public/js/main.js') }}"></script>
+<script>
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+});
+</script>
+@endsection
+
+
+--- search
+
+resources\views\product\index.blade.php
+
+@section('js')
+<script src="{{ asset('public/js/main.js') }}"></script>
+<script>
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+   $('.header_search_button').click(function(){
+      BaseRecord.search = $('.search_input').val();
+      BaseRecord.more();
+      return false;
+   });   
+});
+</script>
+@endsection
+
+
+
+----7-product-blade-view&insert-data-cart
+
+...remember way
+
+resources\views\product\index.blade.php
+
+@include('product.brick-standard')
+
+resources\views\product\brick-standard.blade.php
+
+                    @foreach($products as $product)
+                    <a href="{{ route('product', ['id' => $product->id]) }}">
+
+routes\web.php
+
+Route::name('product')->get('/product/{id}', 'ProductController@product');
+
+ProductController.php
+
+    /**
+     * Show page product.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function product($id)
+    {
+        $product = $this->model->find($id);
+        return view('product.product', ['product' => $product]);
+    }
+
+
+in resources\views\product\product.blade.php paste product-content-paste.php
+
+    <div class="super_container_inner">
+        <div class="super_overlay"></div>
+
+		<!-- Product -->
+
+		<div class="product">
+			<div class="container">
+				<div class="row">
+
+                   <?php 
+                      //print_r($product);  
+                   ?>
+
+                    <!-- Product Info -->
+
+                  <!-- Product image <div class="col-lg-6 product_image"><img src="" />... -->
+                  <div class="col-lg-6 product_image">
+                               <img src="{{ asset('public/images/' . $product->image) }}" />
+                  </div>
+
+                  <div class="col-lg-6 product_col">
+                    <div class="product_info">
+                                    <!-- Product name <div class="product_name"></div> -->
+                      <div class="product_name">{{ $product->name }}</div>
+                      <div class="product_category">В <a href="#">Катагории</a></div>
+                      <div class="product_rating_container d-flex flex-row align-items-center justify-content-start">
+                        <div class="rating_r rating_r_4 product_rating"><i></i><i></i><i></i><i></i><i></i></div>
+                        <div class="product_reviews">4.7 из (3514)</div>
+                        <div class="product_reviews_link"><a href="#">Отзывы</a></div>
+                      </div>
+                                    <!-- Product price <div class="product_price"></div> -->
+                      <div class="product_price">{{ $product->price }}</div>
+                      <div class="product_size">
+...
+                  </div>     
+
+
+resources\views\product\product.blade.php
+
+                          <div class="product_button product_cart text-center d-flex flex-column align-items-center justify-content-center">
+                            <div><div><img src="{{ asset('public/images/cart.svg') }}" class="svg" alt=""><div>+</div></div></div>
+                          <form name="form_tocart" method="post" action="/tocart" style="display: none;">
+                                                {{ csrf_field() }}
+                             <input type="hidden" name="name" value="{{ $product->name }}" />
+                             <input type="hidden" name="price" value="{{ $product->price }}" />
+                             <input type="hidden" name="image" value="{{ asset('public/images/' . $product->image) }}" />                   
+                          </form>  
+...
+@endsection
+
+@section('js')
+<script>
+$(document).ready(function(){
+   $('.product_button.product_cart').click(function(){
+      form_tocart.submit();   
+   });
+});
+</script>
+@endsection
+
+routes\web.php
+
+Route::name('tocart')->post('/tocart', 'ProductController@tocart');
+
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Store thing to cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function tocart(Request $request)
+    {
+        $this->repository->funcStore($request);
+        return redirect(route('cart'));
+    }    
+
+
+app\Repositories\ProductRepository.php
+
+use App\Models\ {
+    Product,
+    Cart
+};
+
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model_product;
+    protected $model_cart;    
+
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     */
+    public function __construct(Product $product, Cart $cart)
+    {
+        $this->model_product = $product;
+        $this->model_cart = $cart;        
+    }
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model_product
+    ...        
+
+    /**
+     * Store thing.
+     *
+     * @param  \App\Http\Requests\Request $request
+     * @return void
+     */
+    public function funcStore($request)
+    {
+        Cart::create($request->all());
+    }    
+
+app\Models\Cart.php
+
+    protected $fillable = [
+         'name', 'price', 'image'
+    ];    
+
+
+-- other variants
+
+...in view
+
+ <form name="form_tocart" method="post" action="{{ url('/tocart') }}" style="display: none;">
+
+<form name="form_tocart" method="post" action="{{ route('re') }}" style="display: none;">
+
+...in repository
+
+    /**
+     * Store thing.
+     *
+     * @param  \App\Http\Requests\Request $request
+     * @return void
+     */
+    public function funcStore($request)
+    {
+        //Cart::create($request->all());
+        //$this->model_cart->create($request->all());
+        $this->model_cart->name = $request->name;
+        $this->model_cart->price = $request->price;
+        $this->model_cart->image = $request->image;
+        $this->model_cart->save();                
+    }    
+
+
+
+----8-insert-cart-validation(Request)&select-data in blade(cart)
+
+app\Http\Controllers\ProductController.php
+
+use App\Http\Requests\CartRequest;
+
+--or
+
+//use App\Repositories\ProductRepository;
+//use App\Http\Requests\CartRequest;
+//use App\Models\Product;
+use App\ {
+   Repositories\ProductRepository,
+   Http\Requests\CartRequest,   
+   Models\Product   
+}; 
+
+    /**
+     * Store thing to cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    //public function tocart(Request $request)
+    public function tocart(CartRequest $request)
+    {
+        $this->repository->funcStore($request);
+        return redirect(route('cart'));
+    }    
+
+app\Http\Requests\CartRequest.php + Request.php (paste)
+
+namespace App\Http\Requests;
+
+class CartRequest extends Request
+{
+    /*
+    public $validator = null; //if you need validator->errors() in Controller
+
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator) //if you need validator->errors() in Controller
+    {
+        $this->validator = $validator;
+    }
+   */
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
+    {
+        return $rules = [
+            'name' => 'bail|required|max:255',
+            'price' => 'bail|required|numeric', 
+            'image' => 'bail|required|max:255',               
+        ];
+    }
+}
+
+--show errors
+
+app\Http\Requests\CartRequest.php
+
+class CartRequest extends Request
+{
+    public $validator = null; //if you need validator->errors() in Controller
+
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator) //if you need validator->errors() in Controller
+    {
+        $this->validator = $validator;
+    }
+...
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Store thing to cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    //public function tocart(Request $request)
+    public function tocart(CartRequest $request)
+    {
+        if(isset($request->validator) && $request->validator->fails()) //if you need validator->errors() in Controller
+        {
+            return redirect(route('product', ['id' => $request->product_id]))->with('message-errors', $request->validator->errors()); //{"message":["The message field is required."]}
+        }
+        $this->repository->funcStore($request);
+        return redirect(route('cart'));
+    }    
+
+...then in resourse\views\product\product.blade.php
+                          <form name="form_tocart" method="post" action="{{ route('tocart') }}" style="display: none;">
+                                                {{ csrf_field() }}
+                             <input type="hidden" name="product_id" value="{{ $product->id }}" />
+
++ here (resourse\views\product\product.blade.php)
+
+		<!-- Product -->
+		<div class="product">
+			<div class="container">
+            @if (session('message-errors'))
+                @component('product.components.alert')
+                    @slot('type')
+                        danger
+                    @endslot
+                    {!! session('message-errors') !!}
+                @endcomponent
+            @endif
+				<div class="row">
+...
+
++ in resourse\views\product\components (paste)
+
+app\Http\Controllers\ProductController.php
+    /**
+     * Show page cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function cart()
+    {
+        $cart = $this->repository->funcCart(); //NOT request
+        return view('product.cart', ['cart' => $cart]);
+    }
+app\Repositories\ProductRepository.php
+use App\Models\ {
+    Product,
+    Cart
+};
+
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model_product;
+    protected $model_cart;    
+
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     */
+    public function __construct(Product $product, Cart $cart)
+    {
+        $this->model_product = $product;
+        $this->model_cart = $cart;        
+    }
+
+    /**
+     * Create a query for Cart.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcCart()
+    {
+        return $this->model_cart
+            ->select('id', 'name', 'price', 'image')
+            ->orderBy('price', 'asc')->get();
+    }
+
+resources\views\product\cart.blade.php
+
+                                   @php
+                                      print_r($cart);
+                                   @endphp
+
+
+
+----9-view data(cart)&delete-data-all(cart)&delete-data-one(cart)
+
+...because Route::name('cart')->get('/cart', 'ProductController@cart');
+recources\views\product\layout.blade.php                
+
+<!-- Cart -->
+                <div class="cart"><a href="{{ route('cart') }}"><div><img class="svg" src="{{ asset('public/images/cart.svg') }}" alt="https://www.flaticon.com/authors/freepik"></div></a></div>
+
+--view cart
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Show page cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function cart()
+    {
+        $cart = $this->repository->funcCart();
+        return view('product.cart', ['cart' => $cart]);
+    }
+
+recources\views\product\cart-standard.blade.php (copy from brick-standard.blade.php + copy-paste from checkout_li.php)
+
+                    @foreach($cart as $cartvalue)
+                                    <!-- Cart Item -->
+                                    <li class="cart_item item_list d-flex flex-lg-row flex-column align-items-lg-center align-items-start justify-content-lg-end justify-content-start" style="width: 50%;">
+                                        <div class="product d-flex flex-lg-row flex-column align-items-lg-center align-items-start justify-content-start mr-auto">
+                                            <div><div class="product_image"><img src="{{ $cartvalue->image }}" alt=""></div></div>
+                                            <div class="product_name_container">
+                                                <div class="product_name"><a href="#">{{ $cartvalue->name }}</a></div>
+                                                <div class="product_text">Second line for additional info</div>
+                                            </div>
+                                        </div>
+                                        <div class="product_price product_text">{{ $cartvalue->price }}</div>
+                                    </li>
+                                    <hr>
+                                   <!-- Cart Item -->
+                    @endforeach
+
+recources\views\product\cart.blade.php
+
+                                   @php
+                                      //print_r($cart);
+                                   @endphp
+
+                                   @include('product.cart-standard')
+
+
+
+--CLEAR-ALL(submit)
+
+recources\views\product\cart.blade.php (form copy-paste from product.blade.php)
+
+                            <!-- Cart Buttons -->
+                            <div class="cart_buttons d-flex flex-row align-items-start justify-content-start">
+                                <div class="cart_buttons_inner ml-sm-auto d-flex flex-row align-items-start justify-content-start flex-wrap">
+                                    <div class="button button_clear trans_200"><a href="#">clear</a></div>
+                                </div>
+                              <form name="form_clearall" method="post" action="{{ route('clearall') }}" style="display: none;">
+                                                    {{ csrf_field() }}     
+                              </form>                                  
+                            </div> 
+
++ @section('js') from product.blade.php
+
+@section('js')
+<script>
+$(document).ready(function(){
+   $('.button_clear').click(function(){
+      form_clearall.submit();   
+   });
+});
+</script>
+@endsection
+
+
+routes\web.php
+
+Route::name('clearall')->post('/clearall', 'ProductController@clearall');
+
+
+app\Http\Controllers\ProductController.php
+
+use App\ {
+   Repositories\ProductRepository,
+   Http\Requests\CartRequest,   
+   Models\Product,
+   Models\Cart
+
+};
+
+    /**
+     * The Model instance.
+     *
+     * @var \App\Models\Product
+     */
+    protected $model_product;  
+    protected $model_cart;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct(ProductRepository $repository, Product $product, Cart $cart)
+    {
+        //$this->middleware('auth');
+        $this->repository = $repository;
+        $this->model_product = $product;   
+        $this->model_cart = $cart;                
+    }
+
+    /**
+     * Show page product.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function product($id)
+    {
+        $product = $this->model_product->find($id);
+        return view('product.product', ['product' => $product]);
+    }
+
+    /**
+     * Clear cart(all).
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function clearall()
+    {
+        $this->model_cart->truncate();
+        return redirect(route('home'));
+    }
+
+
+--a10-delete-data-one(cart-ajax-POST)&reload(ajax-GET)
+
+--CLEAR-ONE(ajax)
+
+recources\views\product\cart-standard.blade.php
+
+<div><a class="btn btn-danger listbuttonremove" id="{{ $cartvalue->id }}" href="#"><i class="fa fa-trash-o" aria-hidden="true"></i></a></div>
+<div><div class="product_image"><img src="{{ $cartvalue->image }}" alt=""></div></div>
+
+
+public\styles\main_styles.css
+
+.listbuttonremove {
+margin: 10px;   
+}
+
+
+recources\views\product\cart.blade.php
+
+@section('js')
+<script src="{{ asset('public/js/main.js') }}"></script>
+<script>
+$(document).ready(function(){
+   $('.button_clear').click(function(){
+      form_clearall.submit();   
+   });
+   $('.listbuttonremove').click(function(){
+      BaseRecord.clearone($(this).attr('id'));
+      return false;
+   });
+});
+</script>
+@endsection
+
+public\js\main.js
+
+clearone: function(id){
+   var ajaxSetting={
+      method: 'post',
+      url: '/clearone',
+      data: {
+         id: id,
+      },
+      success: function(data){
+         //alert(data.table);
+         //$('.row.products_row').html(data.table);
+      },
+   };
+   $.ajax(ajaxSetting); 
+},
+
+...BUT THEN (BECAUSE POST)
+
+recources\views\product\layout.blade.php
+
+<meta charset="utf-8">
+
+<!-- CSRF Token -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+
+public\js\main.js
+
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+})
+…
+
+
+routes\web.php
+
+Route::name('clearone')->post('/clearone', 'ProductController@clearone');
+
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Clear cart(one).
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function clearone(Request $request)
+    {
+        $cartone = $this->model_cart->find($request->id);
+        $cartone->delete();
+        //return redirect(route('home'));
+    }    
+
+--ajax-page-reload after delete
+
+public\js\main.js
+
+clearone: function(id){
+   var ajaxSetting={
+      method: 'post',
+      url: '/clearone',
+      data: {
+         id: id,
+      },
+      success: function(data){
+         //alert(data.table);
+         //$('.row.products_row').html(data.table);
+         BaseRecord.cart();
+      },
+   };
+   $.ajax(ajaxSetting); 
+},
+
+cart: function(){ //copy from more: function...
+   var ajaxSetting={
+      method: 'get',
+      url: '/cart',
+      success: function(data){
+         //alert(data.table);
+         $('.cart_items_list').html(data.table);
+         $('.listbuttonremove').click(function(){ //from cart.blade.php
+            BaseRecord.clearone($(this).attr('id'));
+            return false;
+         });         
+      },
+   };
+   $.ajax(ajaxSetting); 
+},
+
+
+
+
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Show page cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function cart(Request $request)
+    {
+        $cart = $this->repository->funcCart();
+
+        // Ajax response
+        if ($request->ajax()) {
+            return response()->json([
+                'table' => view("product.cart-standard", ['cart' => $cart])->render(),
+            ]);
+        } 
+
+        return view('product.cart', ['cart' => $cart]);
+    }
+

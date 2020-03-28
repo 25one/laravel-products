@@ -1,0 +1,187 @@
+----9-insert-cart-validation(Request)&show-data in blade(cart)
+
+--- other variant for store to cart
+
+app\Repositories\ProductRepository.php
+
+use App\Models\ {
+    Product,
+    Cart
+};
+
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model_product; //!!!
+    protected $model_cart; //!!!    
+
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     */
+    public function __construct(Product $product, Cart $cart) //!!!
+    {
+        $this->model_product = $product; //!!!
+        $this->model_cart = $cart; //!!!        
+    }
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model_product //!!!
+    ...        
+
+...in repository
+
+    /**
+     * Store thing.
+     *
+     * @param  \App\Http\Requests\Request $request
+     * @return void
+     */
+    public function funcStore($request)
+    {
+        //Cart::create($request->all());
+        //$this->model_cart->create($request->all()); //!!!
+        $this->model_cart->name = $request->name; //!!!
+        $this->model_cart->price = $request->price;
+        $this->model_cart->image = $request->image;
+        $this->model_cart->save(); //!!!                
+    }    
+
+--- Validation    
+
+app\Http\Controllers\ProductController.php
+
+use App\Http\Requests\CartRequest;
+
+--or
+
+//use App\Repositories\ProductRepository;
+//use App\Http\Requests\CartRequest;
+//use App\Models\Product;
+use App\ {
+   Repositories\ProductRepository,
+   Http\Requests\CartRequest,   
+   Models\Product   
+}; 
+
+    /**
+     * Store thing to cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    //public function tocart(Request $request)
+    public function tocart(CartRequest $request)
+    {
+        $this->repository->funcStore($request);
+        return redirect(route('cart'));
+    }    
+
+app\Http\Requests\CartRequest.php + Request.php (paste)
+
+namespace App\Http\Requests;
+
+class CartRequest extends Request
+{
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
+    {
+        return $rules = [
+            'name' => 'bail|required|max:255',
+            'price' => 'bail|required|numeric', 
+            'image' => 'bail|required|max:255',               
+        ];
+    }
+}
+
+--show errors
+
+resourse\views\product\product.blade.php
+
+		<!-- Product -->
+        <div class="product">
+            <div class="container">
+                @if ($errors->any())
+                    @component('product.components.alert')
+                        @slot('type')
+                            danger
+                        @endslot
+                      @foreach ($errors->all() as $error)
+                          {{ $error }}<br>
+                      @endforeach
+                    @endcomponent
+                @endif
+                <div class="row">
+...
+
++ in resourse\views\product\components (paste)
+
+---show(print_r) cart
+
+app\Http\Controllers\ProductController.php
+    /**
+     * Show page cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function cart()
+    {
+        $cart = $this->repository->funcCart(); //NOT request
+        return view('product.cart', ['cart' => $cart]);
+    }
+app\Repositories\ProductRepository.php
+use App\Models\ {
+    Product,
+    Cart
+};
+
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model_product;
+    protected $model_cart;    
+
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     */
+    public function __construct(Product $product, Cart $cart)
+    {
+        $this->model_product = $product;
+        $this->model_cart = $cart;        
+    }
+
+    /**
+     * Create a query for Cart.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcCart()
+    {
+        return $this->model_cart
+            ->select('id', 'name', 'price', 'image')
+            ->orderBy('price', 'asc')->get();
+    }
+
+resources\views\product\cart.blade.php
+
+                                   @php
+                                      print_r($cart);
+                                   @endphp

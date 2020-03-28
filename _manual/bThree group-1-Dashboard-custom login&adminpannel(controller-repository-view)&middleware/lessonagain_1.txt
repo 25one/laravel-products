@@ -1,0 +1,108 @@
+Dashboard-custom login&adminpannel(controller-repository-view)&middleware
+
+1.layout.blade.php
+
+            <!-- ... -->
+            @if (\Request::is('/'))
+            <nav class="">
+                <ul>
+                   <!-- Authentication Links -->
+                   @guest
+                     <li class="nav-item">
+                         <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
+                     </li>
+                   @else
+                   <li class="nav-item dropdown">
+                       <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                           {{ Auth::user()->name }} <span class="caret"></span>
+                       </a>
+
+                       <div class="dropdown-menu dropdown-menu-right size" aria-labelledby="navbarDropdown">
+                           <a class="dropdown-item" href="#">Dashboard</a>
+                           <a class="dropdown-item" href="{{ route('logout') }}"
+                              onclick="event.preventDefault();
+                                            document.getElementById('logout-form').submit();">
+                               {{ __('Logout') }}
+                           </a>
+
+                           <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                               @csrf
+                           </form>
+                       </div>
+                   </li>
+                   @endguest                    
+                </ul>
+            </nav>
+            @endif
+            <!-- ... -->
+
+        </div>
+    </header>
+
+2.login.blade.php - just copy from # + !!! php artisan view:clear
+
+3.LoginController.php, RegisterController.php
+
+    protected $redirectTo = '/';
+
+4.layout.blade.php
+
+<a class="dropdown-item" href="{{route('dashboard')}}">Dashboard</a>
+
+5.routes/web.php
+
+Route::name('dashboard')->get('/dashboard', 'AdminController@index');
+
+6.AdminController.php - just copy from #
+
+7.AdminRepository.php - just copy from #
+
+8.create views/product/dashboard + index.blade.php (from _index-first)
+
+9.views\product\dashboard -> components\, products\, brick-standard.blade.php, index.blade.php, layout.blade.php + public\AdminLTE from #
+
+10.public\AdminLTE\main_v2.1.9.css
+
+.img_little {
+width: 150px;  
+}
+
+11.Middleware - если сейчас зарегистрировать пользователя alex (.../register), он может попасть на .../dashboard, чего быть не должно!!!
+
+12.В таблицу users добавляем поле role + роли (admin, user).
+
+13.app\Http\Kernel.php (from 'auth' => ...)
+
+    protected $routeMiddleware = [
+        ...
+        'admin' => \App\Http\Middleware\Admin::class,        
+    ];
+
+14.app\Http\Middleware\Admin.php - just copy
+
+15.routes\web.php
+
+Route::middleware('admin')->group(function () {
+   Route::name('dashboard')->get('/dashboard', 'AdminController@index');
+});
+
+...теперь alex не попадает на dashboard
+
+16.Чтобы для alex (role user) во вью не показывало Dashboard
+app\Providers\AppServisProvider.php
+
+use Illuminate\Support\Facades\Blade;
+
+    public function boot()
+    {
+        Blade::if('admin', function () {
+            return auth()->user()->role === 'admin';
+        });
+        ...
+
+views\product\layout.blade.php
+
+                           @admin
+                           <a class="dropdown-item" href="{{route('dashboard')}}">Dashboard</a>
+                           @endadmin
+                           

@@ -1,0 +1,221 @@
+1.Ajax-cart-clearall
+
+resources\views\product\cart.blade.php
+
+@section('js')
+<!-- <script src="{{ asset('public/js/main.js') }}"></script> -->
+<script>
+$(document).ready(function(){
+   $('.button_clear').click(function(){
+      //form_clearall.submit(); //!!!
+      BaseRecord.clearall(); //!!! 
+      return false; 
+   });
+   $('.listbuttonremove').click(function(){
+      BaseRecord.removeone($(this).attr('id'));   
+      return false; 
+   });
+});
+</script>    
+@endsection
+
+
+public\js\main.js
+
+clearall: function(){
+   //alert(BaseRecord.top9);  
+   var ajaxSetting={
+      method: 'post',
+      url: './clearall', //vagrant - ./
+      //data: {
+      //   id: id,
+      //},
+      success: function(data){
+         //alert(data);
+         //$('.row.products_row').html(data.table);
+         BaseRecord.cart(); //!!!ajax-обновление страницы
+      },
+   };
+   $.ajax(ajaxSetting);
+},
+
+
+app\Http\Controllers\ProductController.php
+
+    public function clearall(Request $request, Cart $cart) //!!!Request
+    {
+        //$this->repository->destroycart();
+        $cart->truncate();
+
+        // Ajax response
+        if ($request->ajax()) { //!!!if ajax
+            return response()->json();
+        } 
+
+        return redirect(route('cart')); //!!!if not ajax
+    } 
+
+
+---------------------------------------------------------------------
+
+--- push (init, config, remote, add, commit, push)
+
+cd /
+cd laravel-products
+
+git init
+git config --global user.name "25one"
+git config --global user.email "25one@ukr.net"
+git config --global core.safecrlf false
+
+git remote add laravel-products https://github.com/25one/laravel-products
+
+git add * -f
+git add .htaccess
+(git add .env -f — for laravel)
+
+git commit -m 'laravel-products'
+
+git push laravel-products master
+
+rm -rf .git
+
+--- clone
+
+cd /
+cd www (!for Vagrant cd var/www/html - !!!without /laravel-products)
+git clone https://github.com/25one/laravel-products.git
+(if folder exists, cd laravel-products and
+git clone https://github.com/25one/laravel-products.git .)
+
+cd laravel-products
+rm -rf .git
+
+sudo chmod -R 777 storage
+sudo chmod -R 777 bootstrap/cache
+php artisan config:cache
+php artisan cache:clear
+php artisan view:clear
+
+---------------------------------------------------------------------
+NEW PROJECT laravel-cards
+
+2.Virtual hosts (laravel-cards)
+
+sudo –i
+
+sudo nano /etc/apache2/sites-available/laravel-cards.conf
+<VirtualHost *:80>
+        ServerName laravel-cards
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/html/laravel-cards
+
+        <Directory /var/www/html/laravel-cards>
+         Options Indexes FollowSymlinks
+         AllowOverride All
+         Require all granted
+        </Directory> 
+</VirtualHost>
+
+sudo ln -s /etc/apache2/sites-available/laravel-cards.conf /etc/apache2/sites-enabled/laravel-cards.conf
+
+cd /
+cd etc
+
+sudo nano hosts
+127.0.0.1   localhost
+127.0.0.1   test
+127.0.0.1   products
+127.0.0.1   laravel-products
+127.0.0.1   ...
+
+sudo service apache2 restart -> !!!not errors
+
+--------------------------------------------------------------------------------------
+
+3-Install&Setting of laravel
+
+Must be VIRTUAL HOST laravel-cards and DB laravel-cards (!create DB).
+
+In Terminal
+
+su vagrant
+cd /
+cd var/www/html
+
+sudo /bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
+sudo /sbin/mkswap /var/swap.1
+sudo /sbin/swapon /var/swap.1
+
+composer create-project --prefer-dist laravel/laravel laravel-cards "5.8.*"
+
+cd laravel-cards
+
+(if you had error after composer create-project...
+remove "phpunit/phpunit": "^7.5"  + !"," for "nunomaduro/collision": "^3.0", in composer.json
+
+    "require-dev": {
+        "beyondcode/laravel-dump-server": "^1.0",
+        "filp/whoops": "^2.0",
+        "fzaninotto/faker": "^1.4",
+        "mockery/mockery": "^1.0",
+        "nunomaduro/collision": "^3.0",
+        "phpunit/phpunit": "^7.5"
+    },
+
++composer install
+)
+
+sudo chmod -R 777 storage
+sudo chmod -R 777 bootstrap/cache
+php artisan config:cache (and if you changed config parameters)
+php artisan cache:clear
+php artisan view:clear (and if you changed views)
+
+Rename .env.example in .env and .env 
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel-cards
+DB_USERNAME=root
+DB_PASSWORD=password
+
+php artisan key:generate 
+php artisan config:cache
+
+Without PUBLIC in URLc
+Rename server.php in your Laravel root folder to index.php 
+Rename the .htaccess file from /public directory to your Laravel root folder. 
+
+Test (without auth)
+http://laravel-cards/ (for Vagrant 127.0.0.1:8080/laravel-cards/)
+
+(if error "...encryption key..."
+php artisan key:generate 
+php artisan config:cache)
+
+php artisan make:auth 
+(views/auth (layouts, home.blade.php) + HomeController.php + web.php(routing) (LoginController.php, RegisterController.php... - и так были))
+
+Edit config/database.php
+...
+            //'charset' => 'utf8mb4',
+            //'collation' => 'utf8mb4_unicode_ci',
+            'charset' => 'utf8',
+            'collation' => 'utf8_unicode_ci',   
+... 
+
+'strict' => false,
+'engine' => 'InnoDB',
+
+php artisan config:cache
+
+database\migrations\2014_10_12_000000_create_users_table.php
+...
+$table->bigIncrements('id'); -> $table->increments('id');
+...
+
+php artisan migrate
+
+Test (with auth)
+http://laravel-cards/

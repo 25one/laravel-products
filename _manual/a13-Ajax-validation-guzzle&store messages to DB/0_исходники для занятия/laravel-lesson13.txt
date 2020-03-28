@@ -1,0 +1,171 @@
+-----13 - Ajax-validation for guzzle
+
+...СЕЙЧАС ЕСТЬ ВОЗМОЖНОСТЬ ОТПРАВИТЬ ПУСТЫЕ ПОЛЯ...
+
+--- ПРОСТАЯ ВАЛИДАЦИЯ НА front (alert)
+
+mailer: function(message, contact){ 
+   if(message!='' && contact!='') {
+      var ajaxSetting={
+      ...
+      };
+      $.ajax(ajaxSetting);
+   } else {
+      alert('Fields message and contact must be filled!');
+   }
+},
+
+...НО ЧЕРЕЗ ОТЛАДЧИК ЭТО МОЖНО ОБОЙТИ...
+
+--- ПОЭТОМУ back-ВАЛИДАЦИЯ (alert)
+
+app\Http\Requests\MailerRequest.php (just copy)
+
+        return $rules = [
+           'message' => 'bail|required|max:255',
+           'contact' => 'bail|required|max:255',      
+        ];
+
+app\Http\Controllers\ProductController.php
+
+use App\ {
+   ...
+   Http\Requests\MailerRequest
+    
+};        
+
+    public function mailer(MailerRequest $request) //just copy method instead
+    {
+        if(isset($request->validator) && $request->validator->fails()) //if you need validator->errors() in Controller
+        {
+            return json_encode($request->validator->errors());
+        }
+
+        return $this->repository->mailer($request);
+    }
+
+public\main.js
+
+mailer: function(message, contact){
+      ...
+      success: function(data){
+         //alert(data.answer); //!!!data.answer - {"mail":[true],"request":[true]}
+         alert(data); //!!!data - {"message":["The message field is required."],"contact":["The contact field is required."]}
+         /*
+         var data_json=JSON.parse(data.answer);
+         if(data_json['mail']){
+            $('.result_to_email').html('Your message has been successfully sent!');
+            $('.result_to_email').css('color', 'green');
+         }
+         */
+      },
+
+
+      ...
+      success: function(data){
+         //alert(data.answer);
+         //alert(data);
+         if(data.answer) {
+            var data_json=JSON.parse(data.answer);
+            if(data_json['mail']){
+               $('.result_to_email').html('Your message has been successfully sent!');
+               $('.result_to_email').css('color', 'green');
+            }       
+         } else {
+            var data_json=JSON.parse(data);      
+            var error_str='';
+            for(var i in data_json){
+               error_str+=data_json[i]+'\n';
+            }  
+            alert(error_str);    
+         }
+      },
+      ...
+
+----- store message to DB
+
+1.database\migrations\2019_02_04_082606_messages.php
+
+<?php
+
+class Messages extends Migration
+{
+
+    public function up()
+    {
+        Schema::create('messages', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('message');
+            $table->string('contact');                            
+        }); 
+    }
+
+    public function down()
+    {
+       Schema::dropIfExists('messages');        
+    }
+}
+
+php artisan migrate
+
+2.app\Models\Message.php (copy from Cart.php)
+
+class Message extends Model {
+
+    public $timestamps = false;
+
+    protected $fillable = [
+         'message', 'contact' //!!!
+    ];  
+
+
+3.app\Repositories\ProductRepository.php
+
+namespace App\Repositories;
+
+use App\Models\ {
+    Product,
+    Cart,
+    Message
+};
+
+class ProductRepository
+{
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model_product;
+    protected $model_cart;   
+    protected $model_message;
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     * @param  \App\Models\Cart $cart
+     * @param  \App\Models\Message $message          
+     */
+    public function __construct(Product $product, Cart $cart, Message $message)
+    {
+        $this->model_product = $product;
+        $this->model_cart = $cart;   
+        $this->model_message = $message;                  
+    }
+
+...
+
+    /**
+     * Mailer for sending message and contact from site.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function funcMailer($request)
+    {
+        //Message::create($request->all());  
+        $this->model_message->message = $request->message;
+        $this->model_message->contact = $request->contact;
+        $this->model_message->save(); 
+        ... 
+

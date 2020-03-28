@@ -1,0 +1,144 @@
+----- 4-routing (product.blade.php, cart.blade.php)
+
+index.blade.php copy to product.blade.php, cart.blade.php
+
+index.blade.php start-content from index.html
+
+@extends('product.layout')
+
+@section('main')
+
+    <div class="super_container_inner">
+        <div class="super_overlay"></div>
+
+        <!-- Products -->
+
+        <div class="products">
+            <div class="container">
+                <div class="row products_row">
+
+                   Hello...
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endsection
+
+product.blade.php start-content from product.html
+
+@extends('product.layout')
+
+@section('main')
+
+    <div class="super_container_inner">
+        <div class="super_overlay"></div>
+
+		<!-- Product -->
+
+		<div class="product">
+			<div class="container">
+				<div class="row">
+
+                   Product...
+
+                </div>   
+            </div>
+        </div>
+
+    </div>     
+@endsection
+
+cart.blade.php start-content from cart.html
+@extends('product.layout')
+
+@section('main')
+
+        <div class="cart_section">
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <div class="cart_container">
+                            
+                            <!-- Cart Items -->
+                            <div class="cart_items">
+                                <ul class="cart_items_list">
+
+                                   Cart...
+
+                                </ul>
+                            </div>
+
+                            <!-- Cart Buttons -->
+                            <div class="cart_buttons d-flex flex-row align-items-start justify-content-start">
+                                <div class="cart_buttons_inner ml-sm-auto d-flex flex-row align-items-start justify-content-start flex-wrap">
+                                    <div class="button button_clear trans_200"><a href="#">clear</a></div>
+                                </div>
+                            </div> 
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>                        
+@endsection
+
+routes\web.php
+
+Route::name('home')->get('/', 'ProductController@index');
+Route::name('product')->get('/product', 'ProductController@product');
+Route::name('cart')->get('/cart', 'ProductController@cart');
+
++...because Route::name('cart')->get('/cart', 'ProductController@cart');
+recources\views\product\layout.blade.php                
+
+<!-- Cart -->
+                <div class="cart"><a href="{{ route('cart') }}"><div><img class="svg" src="{{ asset('public/images/cart.svg') }}" alt="https://www.flaticon.com/authors/freepik"></div></a></div>
+
+...or
+                <div class="cart"><a href="{{ url('/cart') }}"><div><img class="svg" src="{{ asset('public/images/cart.svg') }}" alt="https://www.flaticon.com/authors/freepik"></div></a></div>
+
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Show page home.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index()
+    {
+        return view('product.index');
+    }
+
+    /**
+     * Show page product.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function product()
+    {
+        return view('product.product');
+    }
+
+    /**
+     * Show page cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function cart()
+    {
+        return view('product.cart');
+    }    
+
+проверить работу main.js + main_style.css
+
+$(document).ready(function(){
+   alert('hi');
+});
+
+div {
+color: red;	
+}
+

@@ -1,0 +1,193 @@
+----8-product-blade-view&insert-data-cart
+
+...remember way
+
+resources\views\product\index.blade.php
+
+@include('product.brick-standard')
+
+resources\views\product\brick-standard.blade.php
+
+                    @foreach($products as $product)
+                    <a href="{{ route('product', ['id' => $product->id]) }}">
+
+routes\web.php
+
+Route::name('product')->get('/product/{id}', 'ProductController@product');
+
+ProductController.php
+
+    /**
+     * Show page product.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function product($id)
+    {
+        $product = $this->model->find($id);
+        return view('product.product', ['product' => $product]);
+    }
+
+
+in resources\views\product\product.blade.php paste product-content-paste.php
+
+    <div class="super_container_inner">
+        <div class="super_overlay"></div>
+
+		<!-- Product -->
+
+		<div class="product">
+			<div class="container">
+				<div class="row">
+
+                   <?php 
+                      //print_r($product);  
+                   ?>
+
+                    <!-- Product Info -->
+
+                  <!-- Product image <div class="col-lg-6 product_image"><img src="" />... -->
+                  <div class="col-lg-6 product_image">
+                               <img src="{{ asset('public/images/' . $product->image) }}" />
+                  </div>
+
+                  <div class="col-lg-6 product_col">
+                    <div class="product_info">
+                                    <!-- Product name <div class="product_name"></div> -->
+                      <div class="product_name">{{ $product->name }}</div>
+                      <div class="product_category">В <a href="#">Катагории</a></div>
+                      <div class="product_rating_container d-flex flex-row align-items-center justify-content-start">
+                        <div class="rating_r rating_r_4 product_rating"><i></i><i></i><i></i><i></i><i></i></div>
+                        <div class="product_reviews">4.7 из (3514)</div>
+                        <div class="product_reviews_link"><a href="#">Отзывы</a></div>
+                      </div>
+                                    <!-- Product price <div class="product_price"></div> -->
+                      <div class="product_price">{{ $product->price }}</div>
+                      <div class="product_size">
+...
+                  </div>     
+
+
+resources\views\product\product.blade.php
+
+                          <div class="product_button product_cart text-center d-flex flex-column align-items-center justify-content-center">
+                            <div><div><img src="{{ asset('public/images/cart.svg') }}" class="svg" alt=""><div>+</div></div></div>
+                          <form name="form_tocart" method="post" action="/tocart" style="display: none;">
+                                                {{ csrf_field() }}
+                             <input type="hidden" name="name" value="{{ $product->name }}" />
+                             <input type="hidden" name="price" value="{{ $product->price }}" />
+                             <input type="hidden" name="image" value="{{ asset('public/images/' . $product->image) }}" />                   
+                          </form>  
+...
+@endsection
+
+@section('js')
+<script>
+$(document).ready(function(){
+   $('.product_button.product_cart').click(function(){
+      form_tocart.submit();   
+   });
+});
+</script>
+@endsection
+
+routes\web.php
+
+Route::name('tocart')->post('/tocart', 'ProductController@tocart');
+
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Store thing to cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function tocart(Request $request)
+    {
+        $this->repository->funcStore($request);
+        return redirect(route('cart'));
+    }    
+
+!!!
+app\Models\Cart.php
+
+    protected $fillable = [
+         'name', 'price', 'image'
+    ];    
+
+
+
+app\Repositories\ProductRepository.php
+
+use App\Models\ {
+    Product,
+    Cart
+};
+
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model_product;
+    protected $model_cart;    
+
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     */
+    public function __construct(Product $product, Cart $cart)
+    {
+        $this->model_product = $product;
+        $this->model_cart = $cart;        
+    }
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model_product
+    ...        
+
+    /**
+     * Store thing.
+     *
+     * @param  \App\Http\Requests\Request $request
+     * @return void
+     */
+    public function funcStore($request)
+    {
+        Cart::create($request->all());
+    }    
+
+-- other variants
+
+...in view
+
+<form name="form_tocart" method="post" action="{{ url('/tocart') }}" style="display: none;">
+
+<form name="form_tocart" method="post" action="{{ route('tocart') }}" style="display: none;">
+
+...in repository
+
+    /**
+     * Store thing.
+     *
+     * @param  \App\Http\Requests\Request $request
+     * @return void
+     */
+    public function funcStore($request)
+    {
+        //Cart::create($request->all());
+        //$this->model_cart->create($request->all());
+        $this->model_cart->name = $request->name;
+        $this->model_cart->price = $request->price;
+        $this->model_cart->image = $request->image;
+        $this->model_cart->save();                
+    }    

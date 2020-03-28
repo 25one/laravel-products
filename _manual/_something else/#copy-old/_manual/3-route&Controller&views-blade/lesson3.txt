@@ -1,0 +1,70 @@
+----- 3-route&Controller&views-blade
+
+routes\web.php
+
+/*
+Route::get('/', function () {
+    return view('welcome');
+});
+*/
+
+Auth::routes();
+
+//Route::get('/home', 'HomeController@index')->name('home');
+
+Route::name('home')->get('/', 'ProductController@index');
+
+
+app\Http\Controllers\ProductController.php (from HomeController.php)
+
+class ProductController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        //$this->middleware('auth');
+    }
+
+    /**
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index()
+    {
+        return view('product.index');
+    }
+}
+
+
+resources\views\product\index.blade.php (from welcome.blade.php)
+
+Hello…
+
+laravel-products/
+
+Hello…
+
+
+public\images, plugins, styles + js\jquery-3.2.1.min.js, custom.js from _Template-products + create main.js ($(document).ready… + var BaseRecord={})
+
+Create resources\views\product\layout.blade.php  
++here from index.html header + footer (+ from product.html and cart.html their style)
++from layouts\app.blade.php @yield('main') (between header and footer)
++"{{ asset('public/...') }}" for all (css, js , !!!images)
+
+resources\views\product\index.blade.php
+
+@extends('product.layout')
+
+@section('main')
+
+Hello… <!-- This word is not seen in browser now, but in Elements it is there -->
+
+@endsection
+
+php artisan view:clear

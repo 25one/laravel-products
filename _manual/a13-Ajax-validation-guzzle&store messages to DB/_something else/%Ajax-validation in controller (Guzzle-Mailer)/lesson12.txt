@@ -1,0 +1,92 @@
+-----12 - Ajax-validation (Guzzle-Mailer)
+
+---ProductController.php
+
+    //public function mailer(Request $request)
+    public function mailer(MailerRequest $request)
+    {
+       ...
+
+use App\ {
+   Http\Requests\CartRequest,
+   Http\Requests\MailerRequest,   
+   ...
+
+---MailerRequest.php (copy from CartRequest.php)
+
++
+        return $rules = [
+            'message' => 'bail|required|max:255',
+            'contact' => 'bail|required|max:255',               
+        ];
++
+
+class MailerRequest extends Request
+{
+    public $validator = null; //if you need validator->errors() in Controller
+
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator) //if you need validator->errors() in Controller
+    {
+        $this->validator = $validator;
+    }
+    ...
+
+---ProductController.php
+
+    //public function mailer(Request $request)
+    public function mailer(MailerRequest $request)
+    {
+        if(isset($request->validator) && $request->validator->fails()) //if you need validator->errors() in Controller
+        {
+            return json_encode($request->validator->errors()); //array of errors -> json (!JUST data, without 'answer' (client -> data.answer or data))
+        }
+
+        return $this->repository->funcMailer($request);
+    }
+
+---mine.js
+
+      success: function(data){
+         //alert(data.answer);
+         //alert(data);
+         
+         if(data.answer) {
+            var data_json=JSON.parse(data.answer);
+            if(data_json['mail']) {
+               $('.result_to_email').html('Your message has been sending...');
+               $('.result_to_email').css('color', 'green');
+            }
+         }
+         else {
+            $('.result_to_email').html('There is any mistake...');
+            $('.result_to_email').css('color', 'red');
+         }
+
+      },
+
+or for showing errors of validation
+
+      success: function(data){
+         //alert(data.answer);
+         //alert(data);
+         
+         if(data.answer) {
+            var data_json=JSON.parse(data.answer);
+            if(data_json['mail']) {
+               $('.result_to_email').html('Your message has been sending...');
+               $('.result_to_email').css('color', 'green');
+            }
+         }
+         else {
+            //$('.result_to_email').html('There is any mistake...');
+            //$('.result_to_email').css('color', 'red');
+            var data_json=JSON.parse(data);
+            var errors='';
+            for(var i in data_json) {
+               errors+=data_json[i];
+            }
+            $('.result_to_email').html(errors);
+            $('.result_to_email').css('color', 'red');            
+         }
+
+      },

@@ -1,0 +1,154 @@
+----6-show data in blade(index + brick-standard)&Eloquent-builder query&parameter in route(product)
+
+resources\views\product\brick-standart.blade.php (copy-paste) (from js-project)
+
+at first just in view index.blade.php + @foreach
+
+                   <?php 
+                   //print_r($products); 
+                   ?>
+
+                    @foreach($products as $product)
+                    <div class="col-xl-4 col-md-6">
+                        <div class="product">
+                            <!-- image - img src -->
+                            <div class="product_image"><img src="{{ asset('public/images/' . $product->image) }}" alt=""></div> 
+                            <div class="product_content">
+                                <div class="product_info d-flex flex-row align-items-start justify-content-start">
+                                    <div>
+                                        <div>
+                                            <!-- name - <a href="#">...</a> -->
+                                            <div class="product_name"><a href="#">{{ $product->name }}</a></div> 
+                                        </div>
+                                    </div>
+                                    <div class="ml-auto text-right">
+                                        <!-- price - <span style="font-size: 0.8em;">...</span> -->
+                                        <div class="product_price text-right"><span style="font-size: 0.8em;">{{ $product->price }}</span></div> 
+                                    </div>
+                                </div>
+                                <div class="product_buttons">
+                                    <div class="text-right d-flex flex-row align-items-start justify-content-start">
+                                        <div class="product_button product_cart text-center d-flex flex-column align-items-center justify-content-center">
+                                            <div><div><img src="images/cart.svg" class="svg" alt=""><div>+</div></div></div> <!-- product cart -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                   
+                    @endforeach
+
+...but img — very small because in layout
+
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart_responsive.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product_responsive.css') }}">
+
+...then here <!-- … --> and here
+
+@yield('css')
+(+@yield('js'))
+
+...and in product.blade.php
+
+@extends('product.layout')
+
+@section('css')
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product.css') }}">
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/product_responsive.css') }}">
+@endsection
+
+...and in cart.blade.php
+
+@extends('product.layout')
+
+@section('css')
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart.css') }}">
+   <link rel="stylesheet" type="text/css" href="{{ asset('public/styles/cart_responsive.css') }}">
+@endsection
+
+...or — another variant — brick-standard
+
+from resources\views\product\index.blade.php to brick-standart.blade.php with foreach (paste)
+
++ in  resources\views\product\index.blade.php
+
+                   <?php 
+                   //print_r($products); 
+                   ?>
+
+                   @include('product.brick-standard')
+
+
+top9=1 - app\Repositories\ProductRepository.php
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model
+            ->select('id', 'name', 'price', 'image')
+            //->where('top9', '=', 1);
+            ->where('top9', 1);
+            //->orderBy('price', 'asc');
+        return $query->get();
+    }
+
+resouces\views\product\brick-standard.blade.php
+
+                    @foreach($products as $product)
+                    <a href="{{ route('product', ['id' => $product->id]) }}">
+                       <div class="col-xl-4 col-md-6">
+                        …
+                      </div>  
+                    </a>                   
+                    @endforeach 
+
+routes\web.php
+...
+Route::name('product')->get('/product/{id}', 'ProductController@product');
+...
+
+app\Http\Controllers\ProductController.php
+
+use App\Models\Product;
+
+    /**
+     * The Model instance.
+     *
+     * @var \App\Models\Product
+     */
+    protected $model;    
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct(ProductRepository $repository, Product $product)
+    {
+        //$this->middleware('auth');
+        $this->repository = $repository;
+        $this->model = $product;        
+    }
+
+    /**
+     * Show page product.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function product($id)
+    {
+        $product = $this->model->find($id);
+        return view('product.product', ['product' => $product]);
+    }
+
+resources\views\product\product.blade.php
+
+            <div class="row">
+                   <?php print_r($product);  ?>
+            </div>   

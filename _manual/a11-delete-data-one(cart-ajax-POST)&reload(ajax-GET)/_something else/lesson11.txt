@@ -1,0 +1,148 @@
+-----a11-delete-data-one(cart-ajax-POST)&reload(ajax-GET)
+
+--CLEAR-ONE(ajax)
+
+recources\views\product\cart-standard.blade.php - copy-paste from checkout_li.php
+
+<div><a class="btn btn-danger listbuttonremove" id="{{ $cartvalue->id }}" href="#"><i class="fa fa-trash-o" aria-hidden="true"></i></a></div>
+<div><div class="product_image"><img src="{{ $cartvalue->image }}" alt=""></div></div>
+
+
+public\styles\main_styles.css
+
+.listbuttonremove {
+margin: 10px;   
+}
+
+
+recources\views\product\cart.blade.php
+
+@section('js')
+<script src="{{ asset('public/js/main.js') }}"></script>
+<script>
+$(document).ready(function(){
+   $('.button_clear').click(function(){
+      form_clearall.submit();   
+   });
+   $('.listbuttonremove').click(function(){
+      BaseRecord.clearone($(this).attr('id'));
+      return false;
+   });
+});
+</script>
+@endsection
+
+public\js\main.js
+
+clearone: function(id){
+   var ajaxSetting={
+      method: 'post',
+      url: '/clearone',
+      data: {
+         id: id,
+      },
+      success: function(data){
+         //alert(data.table);
+         //$('.row.products_row').html(data.table);
+      },
+   };
+   $.ajax(ajaxSetting); 
+},
+
+...BUT THEN (BECAUSE POST)
+
+recources\views\product\layout.blade.php
+
+<meta charset="utf-8">
+
+<!-- CSRF Token -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+
+public\js\main.js
+
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+})
+…
+
+
+routes\web.php
+
+Route::name('clearone')->post('/clearone', 'ProductController@clearone');
+
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Clear cart(one).
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function clearone(Request $request)
+    {
+        $cartone = $this->model_cart->find($request->id);
+        $cartone->delete();
+        //return redirect(route('home'));
+    }    
+
+--ajax-page-reload after delete
+
+public\js\main.js
+
+clearone: function(id){
+   var ajaxSetting={
+      method: 'post',
+      url: '/clearone',
+      data: {
+         id: id,
+      },
+      success: function(data){
+         //alert(data.table);
+         //$('.row.products_row').html(data.table);
+         BaseRecord.cart();
+      },
+   };
+   $.ajax(ajaxSetting); 
+},
+
+cart: function(){ //copy from more: function...
+   var ajaxSetting={
+      method: 'get',
+      url: '/cart',
+      success: function(data){
+         //alert(data.table);
+         $('.cart_items_list').html(data.table);
+         $('.listbuttonremove').click(function(){ //from cart.blade.php
+            BaseRecord.clearone($(this).attr('id'));
+            return false;
+         });         
+      },
+   };
+   $.ajax(ajaxSetting); 
+},
+
+
+app\Http\Controllers\ProductController.php
+
+    /**
+     * Show page cart.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function cart(Request $request)
+    {
+        $cart = $this->repository->funcCart();
+
+        // Ajax response
+        if ($request->ajax()) {
+            return response()->json([
+                'table' => view("product.cart-standard", ['cart' => $cart])->render(),
+            ]);
+        } 
+
+        return view('product.cart', ['cart' => $cart]);
+    }
+    

@@ -1,0 +1,146 @@
+----5-migrations+seed(products, cart)&Models&Controller&Repositories(index) (in view – just print_r)
+
+database\migrations\2019_02_02_082606_products.php (copy-paste)
+
++2019_02_03_082606_carts.php
+
+class Carts extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('carts', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->decimal('price', 10, 2);
+            $table->string('image');                                 
+        }); 
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+       Schema::dropIfExists('carts');        
+    }
+}
+
+create app\Models + User.php rename there
+
+namespace App\Models;
+
++app\Http\Controllers\Auth\RegisterControllers.php
+
+use App\Models\User;
+
++config\auth.php
+
+    'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
+
+(
+curl -s http://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/
+alias composer='/usr/local/bin/composer.phar'
+)
+composer dump-autoload
+php artisan config:cache
+sudo chmod -R 777 storage
+
++Product.php (copy-paste), Cart.php (create from Product.php)
+
+
+database\seeds\DatabaseSeeder.php (at first copy-paste, but then just import dump-sql)
+
+php artisan migrate --seed
+
+app\Repositories\ProductRepository.php (copy-paste)
+
+namespace App\Repositories;
+
+use App\Models\ {
+    Product
+};
+
+class ProductRepository
+{
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model;
+
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     */
+    public function __construct(Product $product)
+    {
+        $this->model = $product;
+    }
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model
+            ->select('id', 'name', 'price', 'image');
+        return $query->get();
+    }
+
+app\Http\Controllers\ProductController.php
+
+use App\Repositories\ProductRepository;
+
+    /**
+     * The ProductRepository instance.
+     *
+     * @var \App\Repositories\ProductRepository
+     */
+    protected $repository;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct(ProductRepository $repository)
+    {
+        //$this->middleware('auth');
+        $this->repository = $repository;
+    }
+
+    /**
+     * Show page home.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index(Request $request)
+    {
+        $products = $this->repository->funcSelect($request);
+        return view('product.index', ['products' => $products]);
+    }
+
+resources\views\product\index.blade.php
+
+                <div class="row products_row">
+
+                   <?php print_r($products); ?>
+
+                </div>

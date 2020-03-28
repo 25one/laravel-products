@@ -1,0 +1,51 @@
+-----13 - Ajax-clear cart
+
+1.cart.blade.php
+
+<script>
+$(document).ready(function(){
+   $('.button_clear').click(function(){
+      //clearall.submit();
+      var clear=confirm('Would you like to clean all cart?');
+      if(clear) BaseRecord.clearall();
+      return false;
+   }); 
+   ...
+
+2.main.js
+
+clearall: function(){
+   var ajaxSetting={
+      method: 'post',
+      url: '/clearall',
+      success: function(data){
+         //alert(data.table);
+         //$('.row.products_row').html(data.table);
+         BaseRecord.cart();
+      },
+   };
+   $.ajax(ajaxSetting);   
+},
+...
+
+3.ProductController.php
+
+    /**
+     * Clear cart(all).
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */                
+    public function clearall(Request $request)  //!!!!!Request $request
+    {
+        $this->model_cart->truncate();
+ 
+        // Ajax response
+        if ($request->ajax()) {
+            return response()->json();
+        } 
+
+        return redirect(route('cart'));
+    }
+
+    
+

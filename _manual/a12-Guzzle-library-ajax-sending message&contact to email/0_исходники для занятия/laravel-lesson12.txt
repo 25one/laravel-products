@@ -1,0 +1,156 @@
+-----12 - Guzzle-library-sending to email
+
+---Terminal
+
+vagrant ssh
+
+cd /
+
+cd www/laravel-products (for Vagrant cd var/www/html/laravel-products)
+
++for Vagrant
+sudo /bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
+sudo /sbin/mkswap /var/swap.1
+sudo /sbin/swapon /var/swap.1
+
+---composer.json
+
+...
+    "require": {
+        "php": "^7.1.3",
+        "fideloper/proxy": "^4.0",
+        "laravel/framework": "5.8.*",
+        "laravel/tinker": "^1.0",
+        "guzzlehttp/guzzle": "^6.3"
+    },
+...
+
+composer update
+
+---layout.blade.php 
+uncomment
+<script src="{{ asset('public/js/main.js') }}"></script>
+...then comment this in index.blade.php and cart.blade.php
+
++ here (layout.blade.php)
+
+<script src="{{ asset('public/js/main.js') }}"></script>
+<script>
+$(document).ready(function(){
+   $('.newsletter_button').click(function(){
+      BaseRecord.mailer($('.newsletter_input.message').val(), $('.newsletter_input.email').val());
+   });
+});
+</script>
+
+@yield('js')
+...
+
+or in public\main.js
+
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+})
+
+$(document).ready(function(){
+   $('.newsletter_button').click(function(){
+      BaseRecord.mailer($('.newsletter_input_message').val(), $('.newsletter_input_email').val());   
+   });
+});
+
+var BaseRecord={
+...
+
+---main.js
+
+mailer: function(message, contact){
+   var ajaxSetting={
+      method: 'post',
+      url: './mailer',
+      data: {
+         message: message,
+         contact: contact,
+      },
+      success: function(data){
+         alert(data);
+
+      },
+   };
+   $.ajax(ajaxSetting);   
+},
+
+---web.php
+
+Route::name('mailer')->post('/mailer', 'ProductController@mailer');
+
+---ProductController.php
+
+    /**
+     * Mailer of sending message and contact.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */ 
+    public function mailer(Request $request)
+    {
+        return $this->repository->funcMailer($request);
+    }
+
+---ProductRepository.php
+
+    /**
+     * Mailer of sending message and contact.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */ 
+    public function funcMailer($request)
+    {
+        $title = 'Your message from shop.com - ' . date('d-m-Y H:i:s');
+        $message = 'Message: <b>' . $request->message . '</b><br>';
+        $message .= 'Contact: <b>' . $request->contact . '</b><br>';
+        $client = new \GuzzleHttp\Client([
+           'headers' => [
+               //'Authorization' => '9267585bb333341dc049321d4e74398f',
+               //'Content-Type' => 'application/json',
+            ]
+        ]);
+        $response = $client->request('GET', 'http://api.25one.com.ua/api_mail.php?email_to=' . config('app.adminemail') . '&title=' . $title . '&message=' . $message,
+         [
+            //...
+         ]);    
+        //return json_decode($response->getBody()->getContents());  
+        return response()->json([
+                'answer' => $response->getBody()->getContents(),
+            ]);
+    }                  
+
+
+---app.php
+
+...
+    ],
+
+    'adminemail' => 'kan1001@mail.ru',
+
+];
+
+php artisan config:cache
+
+
+---mine.js
+
+      success: function(data){
+         alert(data.answer);
+
+      },
+
+---mine.js
+
+      success: function(data){
+         //alert(data.answer);
+         var data_json=JSON.parse(data.answer);
+         if(data_json['mail']) {
+            $('.result_to_email').html('Your message has been sending...');
+            $('.result_to_email').css('color', 'green');
+         }

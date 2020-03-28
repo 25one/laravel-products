@@ -1,0 +1,155 @@
+-----13 - Ajax-clear cart
+
+1.cart.blade.php
+
+<script>
+$(document).ready(function(){
+   $('.button_clear').click(function(){
+      //clearall.submit();
+      var clear=confirm('Would you like to clean all cart?');
+      if(clear) BaseRecord.clearall();
+      return false;
+   }); 
+   ...
+
+2.main.js
+
+clearall: function(){
+   var ajaxSetting={
+      method: 'post',
+      url: '/clearall',
+      success: function(data){
+         //alert(data.table);
+         //$('.row.products_row').html(data.table);
+         BaseRecord.cart();
+      },
+   };
+   $.ajax(ajaxSetting);   
+},
+...
+
+3.ProductController.php
+
+    /**
+     * Clear cart(all).
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */                
+    public function clearall(Request $request)  //!!!!!Request $request
+    {
+        $this->model_cart->truncate();
+ 
+        // Ajax response
+        if ($request->ajax()) {
+            return response()->json();
+        } 
+
+        return redirect(route('cart'));
+    }
+
+------------------------------    
+(+ message&contact to DB - Models&migrations)
+
+Models\Message.php
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Message extends Model {
+
+    public $timestamps = false;
+
+    protected $fillable = [
+         'message', 'contact'
+    ];    
+
+}
+
+
+migrations\2019_02_04_082606_messages.php
+
+<?php
+
+//use DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class Messages extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('messages', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('message');
+            $table->string('contact');                            
+        }); 
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+       Schema::dropIfExists('messages');        
+    }
+}
+
+Repositories\ProductRepository.php
+
+namespace App\Repositories;
+
+use App\Models\ {
+    Product,
+    Cart,
+    Message
+};
+
+class ProductRepository
+{
+    /**
+     * The Model instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Model
+     */
+    protected $model_product;
+    protected $model_cart;   
+    protected $model_message;
+
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param  \App\Models\Product $product
+     * @param  \App\Models\Cart $cart
+     * @param  \App\Models\Message $message          
+     */
+    public function __construct(Product $product, Cart $cart, Message $message)
+    {
+        $this->model_product = $product;
+        $this->model_cart = $cart;   
+        $this->model_message = $message;                  
+    }
+
+...
+
+    /**
+     * Mailer for sending message and contact from site.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function funcMailer($request)
+    {
+        $this->model_message->create($request->all());    
+
+        ... 
+

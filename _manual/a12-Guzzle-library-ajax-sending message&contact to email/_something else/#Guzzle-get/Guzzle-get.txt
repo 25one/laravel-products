@@ -1,0 +1,14 @@
+        $client = new \GuzzleHttp\Client([
+           'headers' => [
+               //'Authorization' => '9267585bb333341dc049321d4e74398f',
+               //'Content-Type' => 'application/json',
+            ]
+        ]);
+        $response = $client->request('GET', 'http://api.25one.com.ua/api_mail.php?email_to=' . config('app.adminemail') . '&title=' . $title . '&message=' . $message,
+         [
+            //...
+         ]);    
+        //return json_decode($response->getBody()->getContents());  
+        return response()->json([
+                'answer' => $response->getBody()->getContents(),
+            ]);

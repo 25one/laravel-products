@@ -1,0 +1,164 @@
+---- 7-ajax-more&search(index)
+
+resources\views\product\index.blade.php
+
+...
+
+        <div class="button load_more ml-auto mr-auto"><a href="#" class="link_again">больше</a>
+        
+    </div>
+
+@endsection
+
+
+resources\views\product\layout.blade.php
+
+                @if (\Request::is('/'))  
+                <!-- Search -->
+                <div class="header_search">
+                    <form action="/" id="header_search_form" method="post">
+                        <input type="text" name="search_input" class="search_input" placeholder="Поиск...">
+                        <button name="hook" type="button" class="header_search_button" value="Search"><img src="{{ asset('public/images/search.png') }}" alt=""></button>
+                    </form>
+                </div>
+               @endif
+
+                <!-- Cart -->
+…
+
+...and here is <script src="{{ asset('public/js/main.js') }}"></script>
+
+public\js\main.js
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+});
+
+var BaseRecord={
+
+top9: 1,
+search: '',
+
+more: function(){
+   var ajaxSetting={
+      method: 'get',
+      url: '/', //because Route::name('home')->get('/', 'ProductController@index');
+      data: {
+         top9: this.top9,
+         search: this.search,	
+      },
+      success: function(data){
+         //alert(data.table);
+         $('.row.products_row').html(data.table);
+      },
+   };
+   $.ajax(ajaxSetting);	
+},
+
+};
+
+
+app\Http\Controllers\ProductController.php
+
+    public function index(Request $request)
+    {
+        $products = $this->repository->funcSelect($request);
+
+        // Ajax response
+        if ($request->ajax()) {
+            return response()->json([
+                'table' => view("product.brick-standard", ['products' => $products])->render(),
+            ]);
+        } 
+
+        return view('product.index', ['products' => $products]);
+    }
+
+
+
+app\Repositories\ProductRepository.php
+
+    public function funcSelect($request)
+    {
+        $query = $this->model
+            ->select('id', 'name', 'price', 'image');
+            //->where('top9', '=', 1);
+            //->where('top9', 1);
+            //->orderBy('price', 'asc');
+            if(isset($request->top9)) $query->where('top9', $request->top9)
+                ->where('name', 'like', '%' . $request->search . '%');
+            else $query->where('top9', 1);
+
+        return $query->get();
+    }
+
+--- another variant of place js-code
+
+resources\views\product\layout.blade.php
+
+…
+<!-- <script src="{{ asset('public/js/main.js') }}"></script> -->
+
+@yield('js')
+
+
+pudlic\js\main.js
+
+/*
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+});
+*/
+
+
+var BaseRecord={
+...
+
+
+resources\views\product\index.blade.php
+
+...
+@endsection
+
+@section('js')
+<script src="{{ asset('public/js/main.js') }}"></script>
+<script>
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+});
+</script>
+@endsection
+
+
+--- search
+
+resources\views\product\index.blade.php
+
+@section('js')
+<script src="{{ asset('public/js/main.js') }}"></script>
+<script>
+$(document).ready(function(){
+   $('.load_more').click(function(){
+      BaseRecord.top9 = 0;
+      BaseRecord.more();
+      return false;
+   });
+   $('.header_search_button').click(function(){
+      BaseRecord.search = $('.search_input').val();
+      BaseRecord.more();
+      return false;
+   });   
+});
+</script>
+@endsection

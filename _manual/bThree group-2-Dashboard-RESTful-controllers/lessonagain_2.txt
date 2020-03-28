@@ -1,0 +1,309 @@
+Dashboard-RESTful-controllers
+
+Контроллер ресурсов RESTful
+Verb    Path                        Action  Route Name
+GET     /users                      index   users.index
+GET     /users/create               create  users.create
+POST    /users                      store   users.store
+GET     /users/{user}               show    users.show
+GET     /users/{user}/edit          edit    users.edit
+PUT     /users/{user}               update  users.update
+PUT     /comments/{comment}         update  comments.update
+DELETE  /users/{user}               destroy users.destroy
+Verb — метод выполнения
+Action — имя метода в котроллере
+Route Name — роут во вью
+
+routes/web.php
+
+Route::middleware('admin')->group(function () {
+   Route::name('dashboard')->get('/dashboard', 'AdminController@index');
+   Route::resource('products', 'AdminController'); //RESTful - controllers
+   Route::name('upload')->post('/upload', 'AdminController@upload');   
+});
+
+
+------------------------------------------------
+GET-create
+
+Verb    Path                        Action  Route Name
+GET     /products/create            create  products.create
+
+
+1.views\product\dashboard\layout.blade.php
+
+                <li>
+                    <a href="{{route('products.create')}}">
+                        <i class="fa fa-folder-o"></i> <span>Add new Product</span>
+                    </a>
+                </li>
+
+
+2.AdminController.php
+
+    /**
+     * Create a new view for creating a new product in storage.
+     *
+     * @param  ...
+     * @return \Illuminate\Http\Response
+     */    
+    public function create()
+    {
+       return view('product.dashboard.products.create');
+    }
+
+    /**
+     * Upload a new image for creating a new product in storage.
+     *
+     * @param  ...
+     * @return \Illuminate\Http\Response
+     */
+    public function upload(Request $request)
+    {
+        $file = $request->image;         
+        $filecontent = $file->openFile()->fread($file->getSize());  
+        $filename = date('YmdHis') . $file->getClientOriginalName();  
+        $file->move(public_path() . '/images/', $filename);
+        return view('product.dashboard.products.create', ['image' => $filename]);
+    }    
+
+
+3.views\product\dashboard\products\create.blade.php, template.blade.php - just copy
+
+
+
+4.public\AdminLTE\css\main_v2.1.9.css
+
+.upload_field {
+opacity:0.0;
+z-index:2;
+position:absolute;
+}
+
+.upload_submit {
+z-index:1;
+display:none;
+}
+
+------------------------------------------------
+POST-store
+
+Verb    Path                        Action  Route Name
+POST    /products                   store   products.store
+
+
+1.Http\Requests\ProductRequest.php - just copy (similar of CartRequest)
+
+2.AdminController.php
+
+use App\ {
+   Repositories\AdminRepository,    
+   Models\Product,
+   Http\Requests\ProductRequest //!!!
+};
+
+    /**
+     * Store a newly created product in storage.
+     *
+     * @param  \App\Http\Requests\ProductRequest $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(ProductRequest $request)
+    {
+       $this->repository->store($request); 
+       return redirect(route('products.create'))->with('product-ok', 'New product has been successlully created...');
+    }    
+
+
+3.AdminRepository.php
+
+    /**
+     * Store a newly created product in storage.
+     *
+     * @param  \App\Http\Requests\ProductRequest $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store($request)
+    {
+       $this->model_product->name = $request->name; 
+       $this->model_product->price = $request->price; 
+       $this->model_product->image = $request->image; 
+       return $this->model_product->save();               
+    } 
+
+4.AdminRepository.php - чтобы увидеть добавленное (не только top9=1) (//if(isset($request->top9))... //else $query->where('top9', 1);)
+
+    /**
+     * Create a query for Product.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function funcSelect($request)
+    {
+        $query = $this->model_product
+            ->select('id', 'name', 'price', 'image');
+            //->where('top9', 1)
+            //->orderBy('price', 'asc');
+            //if(isset($request->top9)) $query->where('top9', $request->top9)->where('name', 'like', '%' . $request->search . '%');
+            //else $query->where('top9', 1);
+        return $query->get();
+    }
+
+------------------------------------------------
+GET-edit
+
+Verb    Path                        Action  Route Name
+GET     /products/{id}/edit         edit    products.edit
+
+1.views\product\dashboard\brick-standard.blade.php
+
+<td class="col-md-6 col-sm-6 col-xs-6 center widthbutton"><a class="btn btn-primary listbuttonupdate" href="{{route('products.edit', [$product->id])}}"><i class="fa fa-edit" aria-hidden="true"></i></a></td>
+
+2.views\product\dashboard\products\edit.blade.php - just copy
+
+3.AdminController.php
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\Product $product
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Product $product) //!!!RESTful-controllers
+    {
+       return view('product.dashboard.products.edit', compact('product')); //or ['product' => $product]
+    }
+
+------------------------------------------------
+PUT-update
+
+Verb    Path                        Action  Route Name
+PUT     /products/{id}              update  products.update
+
+1.AdminController.php
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \App\Http\Requests\ProductRequest $request
+     * @param  \App\Models\Product $product
+     * @return \Illuminate\Http\Response
+     */    
+    public function update(ProductRequest $request, Product $product)
+    {
+       $this->repository->update($request, $product); 
+       return redirect(route('dashboard'))->with('product-updated', 'New product has been successlully updated...');
+    }     
+
+2.AdminRepository.php
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @return \Illuminate\Http\Response
+     */    
+    public function update($request, $product)
+    {
+       $product->name = $request->name; 
+       $product->price = $request->price; 
+       $product->image = $request->image; 
+       return $product->save(); 
+    }  
+
+------------------------------------------------
+DELETE-destroy (!ajax)
+
+Verb    Path                        Action  Route Name
+DELETE  /products/{id}              destroy products.destroy
+
+1.views\product\dashboard\brick-standard.blade.php
+
+<td class="center widthbutton"><a class="btn btn-danger listbuttonremove" href="{{'products/' . $product->id}}"><i class="fa fa-trash-o" aria-hidden="true"></i></a></td>
+
+
+2.views\product\dashboard\index.blade.php
+
+@section('js')
+    <script src="{{ asset('public/js/main.js') }}"></script> <!-- !!!main.js -->
+    <script>
+       $(document).ready(function(){
+          $('.listbuttonremove').click(function(){
+             BaseRecord.dashboarddestroy($(this).attr('href'));
+             return false;
+          });
+       });
+    </script>
+@endsection    
+
+
+3.public/js/main.js
+
+dashboarddestroy: function(url){
+   var ajaxSetting={
+      method: 'delete',
+      url: url,
+      //data: {
+      //  message: message,
+      //  contact: contact,
+      //},
+      success: function(data){
+         //alert(data.answer);
+         BaseRecord.dashboard();
+
+      },
+   };
+   $.ajax(ajaxSetting);
+},
+
+dashboard: function(){
+   var ajaxSetting={
+      method: 'get',
+      url: './dashboard',
+      //data: {
+      //  message: message,
+      //  contact: contact,
+      //},
+      success: function(data){
+          $('#pannel').html(data.table);
+          $('.listbuttonremove').click(function(){
+             BaseRecord.dashboarddestroy($(this).attr('href'));
+             return false;
+          });         
+
+      },
+   };
+   $.ajax(ajaxSetting);
+},
+
+4.AdminCongtroller.php
+
+    /**
+     * Remove the product from storage.
+     *
+     * @param  \App\Models\Product $product
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Product $product)
+    {
+        $product->delete();
+
+        return response()->json(); 
+    }         
+
++in AdminController.php this is here
+
+    public function index(Request $request)
+    {
+        $products = $this->repository->funcSelect($request);
+
+        // Ajax response
+        if ($request->ajax()) {
+            return response()->json([
+                'table' => view("product.dashboard.brick-standard", ['products' => $products])->render(),
+            ]);
+        } 
+
+        return view('product.dashboard.index', ['products' => $products]); //or compact('products')
+    }
+
+
